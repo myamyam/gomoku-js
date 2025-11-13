@@ -114,10 +114,9 @@ function checkOmokCompleted(coord, takes) {
     let streak = 1;
     const type = (takes.length - 1) % 2;
 
-    //정방향
     for (
       let x = coord.x + dir.x, y = coord.y + dir.y;
-      x > 0 && x < 19 && y > 0 && y < 19;
+      x > 0 && x < 15 && y > 0 && y < 15;
       x += dir.x, y += dir.y
     ) {
       if (takes.some((t, index) => t.x == x && t.y == y && index % 2 == type))
@@ -125,10 +124,9 @@ function checkOmokCompleted(coord, takes) {
       else break;
     }
 
-    //반대방향
     for (
       let x = coord.x - dir.x, y = coord.y - dir.y;
-      x > 0 && x < 19 && y > 0 && y < 19;
+      x > 0 && x < 15 && y > 0 && y < 15;
       x -= dir.x, y -= dir.y
     ) {
       if (takes.some((t, index) => t.x == x && t.y == y && index % 2 == type))

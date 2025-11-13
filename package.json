@@ -1,21 +1,28 @@
 {
-  "name": "gomoku_js",
+  "name": "gomoku-js",
   "version": "1.0.0",
   "description": "Online Gomoku",
   "keywords": [
     "socket"
   ],
+  "homepage": "https://github.com/myamyam/gomoku-js#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/myamyam/gomoku-js"
+    "url": "git+https://github.com/myamyam/gomoku-js.git"
   },
   "license": "ISC",
   "author": "sumin",
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "dev":"nodemon",
+    "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.28.3",
@@ -24,11 +31,5 @@
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.28.5",
     "nodemon": "^3.1.11"
-  },
-  "dependencies": {
-    "express": "^5.1.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "socket.io": "^4.8.1"
   }
 }

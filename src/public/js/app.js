@@ -1,5 +1,12 @@
 const socket = io();
 
+function Mobile() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+}
+const isMobile = Mobile();
+
 socket.onAny((event) => {
   console.log(`Socket event: ${event}`);
 });
@@ -84,13 +91,10 @@ const WaitingRoom = () => {
 };
 
 ////////////////////////////////////////////////////////////////////////
-const BOARD_OFFSET = 3.62; //%
-const BOARD_SPACE = 5.14; //%
-//크기: 5%
-//칸: 5.14%
-//공백: 3.62%
+const BOARD_OFFSET = 5.24; //%
+const BOARD_SPACE = 6.41; //%
+
 const stone = ({ type, x, y }) => {
-  //console.log(`${white} (${x},${y})`);
   let material = "";
   type.forEach((m) => {
     switch (m) {
@@ -122,6 +126,98 @@ const stone = ({ type, x, y }) => {
 };
 
 const MemoriedStone = React.memo(stone);
+
+const CoordSelectArea = ({
+  onBoardEnter,
+  onBoardMove,
+  onBoardLeave,
+  onBoardSelect,
+}) => {
+  function getCoord(event) {
+    let coordX = 0;
+    let coordY = 0;
+
+    if (!isMobile) {
+      const percentX =
+        (event.nativeEvent.offsetX * 100.0) / event.target.clientWidth;
+      const percentY =
+        (event.nativeEvent.offsetY * 100.0) / event.target.clientHeight;
+
+      coordX = parseInt((percentX - BOARD_OFFSET) / BOARD_SPACE + 0.5);
+      coordY = parseInt((percentY - BOARD_OFFSET) / BOARD_SPACE + 0.5);
+    } else {
+      const bcr = event.target.getBoundingClientRect();
+      const x = event.targetTouches[0].clientX - bcr.x;
+      const y = event.targetTouches[0].clientY - bcr.y;
+
+      const percentX = (x * 100.0) / event.target.clientWidth;
+      const percentY = (y * 100.0) / event.target.clientHeight;
+      coordX = parseInt((percentX - BOARD_OFFSET) / BOARD_SPACE + 0.5);
+      coordY = parseInt((percentY - BOARD_OFFSET) / BOARD_SPACE - 1.5);
+    }
+
+    if (coordX < 0) coordX = 0;
+    if (coordY < 0) coordY = 0;
+
+    if (coordX > 18) coordX = 18;
+    if (coordY > 18) coordY = 18;
+
+    return {
+      x: coordX,
+      y: coordY,
+    };
+  }
+
+  const onMouseEnter = () => {
+    if (isMobile) return;
+    onBoardEnter();
+  };
+
+  const onMouseMove = (event) => {
+    if (isMobile) return;
+    onBoardMove(getCoord(event));
+  };
+
+  const onMouseLeave = () => {
+    if (isMobile) return;
+    onBoardLeave();
+  };
+
+  const onMouseClick = () => {
+    if (isMobile) return;
+    onBoardSelect();
+  };
+
+  const onTouchStart = (event) => {
+    if (!isMobile) return;
+    onBoardEnter();
+    onBoardMove(getCoord(event));
+  };
+
+  const onTouchMove = (event) => {
+    if (!isMobile) return;
+    onBoardMove(getCoord(event));
+  };
+
+  const onTouchEnd = (event) => {
+    if (!isMobile) return;
+    onBoardLeave();
+    onBoardSelect();
+  };
+
+  return (
+    <div
+      className="omokboard__coord"
+      onMouseEnter={onMouseEnter}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      onClick={onMouseClick}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    ></div>
+  );
+};
 
 const OmokBoard = ({ takes }) => {
   const [inBoard, setInBoard] = React.useState(false);
