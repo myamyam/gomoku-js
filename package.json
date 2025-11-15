@@ -19,7 +19,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "express": "^5.1.0",
+    "ioredis": "^5.8.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "socket.io": "^4.8.1"

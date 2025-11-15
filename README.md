@@ -17,4 +17,14 @@ npm install --save-dev @babel/core @babel/cli @babel/node @babel/preset-env @bab
 npm install --save express react react-dom socket.io
 
 ## 실행
-npm run dev
+npm install pm2 -g
+
+pm2 start src/server.js
+
+pm2 ls
+
+pm2 logs
+
+pm2 restart server
+
+pm2 stop server

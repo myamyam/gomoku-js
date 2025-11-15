@@ -79,7 +79,6 @@ function leaveRoom(socket) {
   console.log(`Socket ${socket.id} is leaving room ${name}.`);
 
   if (name != undefined) {
-    //현재 Disconnect 하는 Socket이 해당 방의 마지막 소켓일 경우 방 제거
     if (countRoom(name) == 1) {
       console.log(`Remove room ${name}`);
       publicRoom = publicRoom.filter((value) => value.name != name);
@@ -100,14 +99,12 @@ function leaveRoom(socket) {
   }
 }
 
-//오목 완성 판별
 function checkOmokCompleted(coord, takes) {
-  //(0, 1), (1, 1), (1, 0), (1, -1)
   const offset = [
     { x: 1, y: 0 }, //가로
-    { x: 1, y: 1 }, //대각선1
+    { x: 1, y: 1 }, //대각선위
     { x: 0, y: 1 }, //세로
-    { x: -1, y: 1 }, //대각선2
+    { x: -1, y: 1 }, //대각선아래
   ];
 
   return offset.some((dir) => {
@@ -145,17 +142,14 @@ wsServer.on("connection", (socket) => {
     console.log(`Socket event: ${event}`);
   });
 
-  //방 목록 반환
   socket.on("room_list", () => {
     socket.emit("room_list", publicRoom);
   });
 
-  //방 만들기
   socket.on("room_new", (name) => {
     name = name.trim();
     console.log(`Socket ${socket.id} is creating room ${name}.`);
 
-    //Socket은 ID와 같은 Room을 Default로 갖고 있음
     if (socket.rooms.size > 1) {
       console.log(`socket ${socket.id} is already in room.`);
       console.log(socket.rooms);
@@ -163,7 +157,6 @@ wsServer.on("connection", (socket) => {
       return;
     }
 
-    //동일한 방이 존재할 경우
     if (!checkDuplicateRoomName(name)) {
       console.log(`Room name ${name} already exists.`);
       socket.emit("error", "동일한 방이 이미 존재합니다.");
@@ -185,7 +178,6 @@ wsServer.on("connection", (socket) => {
     enterRoom(socket, name);
   });
 
-  //기존 방 참가
   socket.on("room_enter", (name) => {
     if (socket.rooms.size > 1) {
       console.log(`socket ${socket.id} is already in room.`);
@@ -200,6 +192,21 @@ wsServer.on("connection", (socket) => {
   socket.on("room_leave", () => {
     leaveRoom(socket);
     socket.emit("room_leave");
+  });
+
+  socket.on("chat_message", (text) =>{
+    const roomName=getJoinedRoomName(socket);
+    const room = getPublicRoom(roomName);
+
+    if(!room){
+      socket.emit("error", "방에 입장하지 않았습니다.");
+      return;
+    }
+    wsServer.in(roomName).emit("chat_message", {
+      sender:socket.id,
+      text:text,
+      timestamp:Date.now(),
+    });
   });
 
   socket.on("player_change", (color) => {

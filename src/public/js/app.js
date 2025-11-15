@@ -47,10 +47,17 @@ const RoomItem = (room) => {
   const handleEnterRoom = () => {
     socket.emit("room_enter", room.name);
   };
+  const playerCount = (room.blackPlayer ? 1:0)+(room.whitePlayer ? 1:0);
+  const isPlaying=room.blackPlayer !== "" && room.whitePlayer!=="";
 
   return (
     <li key={room.name} className="room-list__item">
       <p className="room-list__name">{room.name}</p>
+      <p className="room-list__status">
+        인원: {playerCount} / 2
+        <br />
+        {isPlaying ? "게임 진행중" : "대기중"}
+      </p>
       <button className="room-list__enter" onClick={handleEnterRoom}>
         입장하기
       </button>
@@ -293,11 +300,27 @@ const OmokBoard = ({ takes }) => {
 
 const GamePanel = ({ roomname, blackPlayer, whitePlayer }) => {
   const [message, setMessage] = React.useState([]);
+  const [chatInput, setChatInput] = React.useState("");
+  
+  const sendChat=()=>{
+    if (chatInput.trim().length ===0) return;
+    socket.emit("chat_message", chatInput);
+    setChatInput("");
+  };
 
   React.useEffect(() => {
     socket.on("message", (msg) => {
-      setMessage((value) => [...value, msg]);
+      setMessage((value) => [...value, {sender: "SYSTEM", text:msg}]);
     });
+
+    socket.on("chat_message", (data) => {
+      setMessage((value) => [...value, data]);
+    });
+
+    return()=>{
+      socket.off("message");
+      socket.off("chat_message");
+    };
   }, []);
 
   const Player = ({ name, onClick }) => {
@@ -314,12 +337,11 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer }) => {
     );
   };
 
-  const MessageLine = (msg) => {
+  const MessageLine = (data, index) => {
     return (
-      <>
-        {msg}
-        <br />
-      </>
+      <div key={index}>
+        {data.sender}: {data.text}
+      </div>
     );
   };
 
@@ -350,7 +372,25 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer }) => {
           </div>
         </div>
         <div className="game-panel__message">
-          <p>{message.map(MessageLine)}</p>
+          <p>{message.map((m, i)=>MessageLine(m,i))}</p>
+        </div>
+        <div className="game-panel__chat">
+          <input
+            type="text"
+            className="game-panel__chatinput"
+            value={chatInput}
+            onChange={(e) => setChatInput(e.target.value)}
+            placeholder="메시지를 입력하세요"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") sendChat();
+            }}
+          />
+          <button
+            className="game-panel__chatsend"
+            onClick={sendChat}
+          >
+            전송
+          </button>
         </div>
       </div>
       <div className="game-panel__buttons">
