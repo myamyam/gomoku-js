@@ -153,13 +153,13 @@ wsServer.on("connection", (socket) => {
     if (socket.rooms.size > 1) {
       console.log(`socket ${socket.id} is already in room.`);
       console.log(socket.rooms);
-      socket.emit("error", "이미 다른 방에 참가중입니다.");
+      socket.emit("error", "다른 방에 참가중입니다.");
       return;
     }
 
     if (!checkDuplicateRoomName(name)) {
       console.log(`Room name ${name} already exists.`);
-      socket.emit("error", "동일한 방이 이미 존재합니다.");
+      socket.emit("error", "이미 존재하는 방입니다.");
       return;
     }
 
@@ -182,7 +182,7 @@ wsServer.on("connection", (socket) => {
     if (socket.rooms.size > 1) {
       console.log(`socket ${socket.id} is already in room.`);
       console.log(socket.rooms);
-      socket.emit("error", "이미 다른 방에 참가중입니다.");
+      socket.emit("error", "다른 방에 참가중입니다.");
       return;
     }
 

@@ -28,3 +28,9 @@ pm2 logs
 pm2 restart server
 
 pm2 stop server
+
+
+OR
+
+
+npm run dev

@@ -43,9 +43,14 @@ const NewRoom = () => {
   );
 };
 
-const RoomItem = (room) => {
-  const handleEnterRoom = () => {
+const RoomItem = ({room, setEnterMode}) => {
+  const handleEnterPlayer = () => {
+    setEnterMode("player");
     socket.emit("room_enter", room.name);
+  };
+  const handleEnterSpectator=()=>{
+    setEnterMode("spectator");
+    socket.emit("room_enter",room.name);
   };
   const playerCount = (room.blackPlayer ? 1:0)+(room.whitePlayer ? 1:0);
   const isPlaying=room.blackPlayer !== "" && room.whitePlayer!=="";
@@ -58,23 +63,31 @@ const RoomItem = (room) => {
         <br />
         {isPlaying ? "게임 진행중" : "대기중"}
       </p>
-      <button className="room-list__enter" onClick={handleEnterRoom}>
-        입장하기
+      {playerCount<2 && (<button className="room-list__enter" onClick={handleEnterPlayer}>
+        플레이어 입장
+      </button>
+      )}
+      <button className="room-list__enter" onClick={handleEnterSpectator}>
+        관전 입장
       </button>
     </li>
   );
 };
 
-const RoomList = ({ roomList }) => {
+const RoomList = ({ roomList, setEnterMode }) => {
   return (
     <div className="room-list">
       <h3>방 목록</h3>
-      <ul className="room-list__container">{roomList.map(RoomItem)}</ul>
+      <ul className="room-list__container">
+        {roomList.map((room) => (
+          <RoomItem key={room.name} room={room} setEnterMode={setEnterMode} />
+        ))}
+      </ul>
     </div>
   );
 };
 
-const WaitingRoom = () => {
+const WaitingRoom = ({setEnterMode}) => {
   const [roomList, setRoomList] = React.useState([]);
   document.title = `대기실: 참가 가능한 방 ${roomList.length}개`;
   React.useEffect(() => {
@@ -92,7 +105,7 @@ const WaitingRoom = () => {
   return (
     <div className="waiting-room">
       <NewRoom />
-      <RoomList roomList={roomList} />
+      <RoomList roomList={roomList} setEnterMode={setEnterMode} />
     </div>
   );
 };
@@ -298,10 +311,11 @@ const OmokBoard = ({ takes }) => {
   );
 };
 
-const GamePanel = ({ roomname, blackPlayer, whitePlayer }) => {
+const GamePanel = ({ roomname, blackPlayer, whitePlayer, enterMode }) => {
   const [message, setMessage] = React.useState([]);
   const [chatInput, setChatInput] = React.useState("");
-  
+  const isSpectator=enterMode==="spectator";
+
   const sendChat=()=>{
     if (chatInput.trim().length ===0) return;
     socket.emit("chat_message", chatInput);
@@ -323,11 +337,13 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer }) => {
     };
   }, []);
 
-  const Player = ({ name, onClick }) => {
+  const Player = ({ name, onClick, isSpectator }) => {
     return (
       <div className="game-panel__playerinfo">
         {name !== "" ? (
           <p className="game-panel__playername">{name}</p>
+        ) : isSpectator ? (
+          <p className="game-panel__playername">(관전자)</p>
         ) : (
           <button className="game-panel__playerselect" onClick={onClick}>
             참가
@@ -362,13 +378,13 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer }) => {
             <h4 className="game-panel__playercolor game-panel__playercolor--black">
               Black
             </h4>
-            <Player name={blackPlayer} onClick={blackPlayerCallback} />
+            <Player name={blackPlayer} onClick={blackPlayerCallback} isSpectator={isSpectator}/>
           </div>
           <div className="game-panel__player">
             <h4 className="game-panel__playercolor game-panel__playercolor--white">
               White
             </h4>
-            <Player name={whitePlayer} onClick={whitePlayerCallback} />
+            <Player name={whitePlayer} onClick={whitePlayerCallback} isSpectator={isSpectator}/>
           </div>
         </div>
         <div className="game-panel__message">
@@ -396,12 +412,6 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer }) => {
       <div className="game-panel__buttons">
         <button
           className="game-panel__button"
-          onClick={() => socket.emit("player_change", "spectator")}
-        >
-          관전하기
-        </button>
-        <button
-          className="game-panel__button"
           onClick={() => {
             socket.emit("room_leave");
           }}
@@ -413,7 +423,7 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer }) => {
   );
 };
 
-const GamingRoom = ({ publicRoom }) => {
+const GamingRoom = ({ publicRoom, enterMode }) => {
   const [roomName, setRoomName] = React.useState(publicRoom.name);
   const [blackPlayer, setBlackPlayer] = React.useState(publicRoom.blackPlayer);
   const [whitePlayer, setWhitePlayer] = React.useState(publicRoom.whitePlayer);
@@ -469,6 +479,7 @@ const GamingRoom = ({ publicRoom }) => {
         roomname={roomName}
         blackPlayer={blackPlayer}
         whitePlayer={whitePlayer}
+        enterMode={enterMode}
       />
       {winner !== "" ? <GameEndScreen winner={winner} /> : null}
     </div>
@@ -476,26 +487,31 @@ const GamingRoom = ({ publicRoom }) => {
 };
 
 const App = () => {
+  
   const [publicRoom, setPublicRoom] = React.useState({});
+  const [enterMode, setEnterMode]=React.useState("player");
 
   React.useEffect(() => {
     socket.on("room_enter", (room) => {
       console.log(`Enter room ${room.name}`);
       setPublicRoom(room);
+      if (enterMode === "spectator"){
+        socket.emit("player_change", "spectator");
+      }
     });
 
     socket.on("room_leave", () => {
       setPublicRoom({});
     });
-  }, []);
+  }, [enterMode]);
 
   return (
     <>
       <Header />
       {publicRoom.name === undefined ? (
-        <WaitingRoom />
+        <WaitingRoom setEnterMode={setEnterMode}/>
       ) : (
-        <GamingRoom publicRoom={publicRoom} />
+        <GamingRoom publicRoom={publicRoom} enterMode={enterMode}/>
       )}
     </>
   );
