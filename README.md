@@ -29,6 +29,8 @@ npm run dev
 ```
 
 ## Protocol Specification
+| Protocol List |
+| -------------------------- |
 | ROOM_LIST : {'type': 'room_list'}  |  
 | CREATE_ROOM : {'type': 'room_new', 'room_name':'<string>}  |  
 | JOIN_ROOM : {'type': 'room_enter', 'room_name': '<string>}  |  
