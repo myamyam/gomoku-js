@@ -1,5 +1,12 @@
 const socket = io();
 
+let userId=localStorage.getItem("userId");
+if (!userId) {
+  userId=crypto.randomUUID();
+  localStorage.setItem("userId", userId);
+}
+socket.emit("auth", userId);
+
 function Mobile() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
@@ -264,7 +271,6 @@ const OmokBoard = ({ takes }) => {
   };
 
   const handleBoardMove = (coord) => {
-    //이미 돌이 존재하면 건너뜀
     if (takes.find((c) => c.x === coord.x && c.y === coord.y) === undefined) {
       setCoord(coord);
     }
@@ -315,6 +321,8 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer, enterMode }) => {
   const [message, setMessage] = React.useState([]);
   const [chatInput, setChatInput] = React.useState("");
   const isSpectator=enterMode==="spectator";
+  const messageRef=React.useRef();
+  const [remainingTime, setRemainingTime]=React.useState(null);
 
   const sendChat=()=>{
     if (chatInput.trim().length ===0) return;
@@ -323,6 +331,9 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer, enterMode }) => {
   };
 
   React.useEffect(() => {
+    if (messageRef.current) {
+      messageRef.current.scrollTop=messageRef.current.scrollHeight;
+    }
     socket.on("message", (msg) => {
       setMessage((value) => [...value, {sender: "SYSTEM", text:msg}]);
     });
@@ -330,12 +341,24 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer, enterMode }) => {
     socket.on("chat_message", (data) => {
       setMessage((value) => [...value, data]);
     });
+    socket.on("timer_init", ({remaining})=>{
+      setRemainingTime(remaining);
+    })
+    socket.on("timer_tick", ({remaining})=>{
+      setRemainingTime(remaining);
+    })
+    socket.on("timeout", ()=>{
+      setRemainingTime(null);
+    })
 
     return()=>{
       socket.off("message");
       socket.off("chat_message");
+      socket.off("timer_init");
+      socket.off("timer_tick");
+      socket.off("timeout");
     };
-  }, []);
+  }, [message]);
 
   const Player = ({ name, onClick, isSpectator }) => {
     return (
@@ -372,7 +395,12 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer, enterMode }) => {
   return (
     <div className="game-panel">
       <div className="game-panel__main">
-        <h3 className="game-panel__title">{roomname}</h3>
+        <h3 className="game-panel__title">
+          {roomname}
+          {remainingTime !==null&&(
+            <span className="timer-display"> ⏱ {remainingTime}s </span>
+          )}
+          </h3>
         <div className="game-panel__players">
           <div className="game-panel__player">
             <h4 className="game-panel__playercolor game-panel__playercolor--black">
@@ -387,7 +415,7 @@ const GamePanel = ({ roomname, blackPlayer, whitePlayer, enterMode }) => {
             <Player name={whitePlayer} onClick={whitePlayerCallback} isSpectator={isSpectator}/>
           </div>
         </div>
-        <div className="game-panel__message">
+        <div className="game-panel__message" ref={messageRef}>
           <p>{message.map((m, i)=>MessageLine(m,i))}</p>
         </div>
         <div className="game-panel__chat">

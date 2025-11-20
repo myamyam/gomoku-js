@@ -33,12 +33,10 @@ function findSocketByID(id) {
   return wsServer.sockets.sockets.get(id);
 }
 
-//이름이 name인 방에 속한 Socket 개수 반환
 function countRoom(name) {
   return wsServer.sockets.adapter.rooms.get(name).size;
 }
 
-//중복된 이름의 방이 존재할 경우 false, 없을 경우 true
 function checkDuplicateRoomName(name) {
   if (wsServer.sockets.adapter.rooms.get(name)) {
     return false;
@@ -59,6 +57,20 @@ function emitPlayerChange(room) {
   }
 }
 
+function getSafeRoomData(room) {
+  return {
+    name: room.name,
+    blackPlayer: room.blackPlayer,
+    whitePlayer: room.whitePlayer,
+    takes: room.takes,
+    remaining: room.remaining ?? 30,
+  };
+}
+
+function getSafeRoomList(){
+  return publicRoom.map(getSafeRoomData);
+}
+
 function enterRoom(socket, name) {
   const room = getPublicRoom(name);
   console.log(`Socket ${socket.id} is entering room ${name}.`);
@@ -69,7 +81,7 @@ function enterRoom(socket, name) {
   }
 
   socket.join(name);
-  socket.emit("room_enter", room);
+  socket.emit("room_enter", getSafeRoomData(room));
   wsServer.to(name).emit("message", `${socket.id} 님이 입장하셨습니다.`);
 }
 
@@ -82,7 +94,7 @@ function leaveRoom(socket) {
     if (countRoom(name) == 1) {
       console.log(`Remove room ${name}`);
       publicRoom = publicRoom.filter((value) => value.name != name);
-      wsServer.sockets.emit("room_list", publicRoom);
+      wsServer.sockets.emit("room_list", getSafeRoomList());
     } else {
       const room = getPublicRoom(name);
       if (room.blackPlayer === socket.id) {
@@ -101,10 +113,10 @@ function leaveRoom(socket) {
 
 function checkOmokCompleted(coord, takes) {
   const offset = [
-    { x: 1, y: 0 }, //가로
-    { x: 1, y: 1 }, //대각선위
-    { x: 0, y: 1 }, //세로
-    { x: -1, y: 1 }, //대각선아래
+    { x: 1, y: 0 },
+    { x: 1, y: 1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 1 },
   ];
 
   return offset.some((dir) => {
@@ -136,6 +148,43 @@ function checkOmokCompleted(coord, takes) {
     }
   });
 }
+function startTurnTimer(room) {
+  if (room.timer) clearTimeout(room.timer);
+
+  room.remaining = room.turnTime;
+
+  wsServer.in(room.name).emit("timer_init", {
+    remaining: room.remaining
+  });
+
+  room.interval = setInterval(() => {
+    room.remaining -= 1;
+    wsServer.in(room.name).emit("timer_tick", {
+      remaining: room.remaining
+    });
+  }, 1000);
+
+  room.timer = setTimeout(() => {
+    handleTimeout(room);
+  }, room.turnTime * 1000);
+}
+
+function handleTimeout(room) {
+  clearInterval(room.interval);
+
+  const isBlackTurn = room.takes.length % 2 === 0;
+  const loser = isBlackTurn ? "black" : "white";
+  const winner = isBlackTurn ? "white" : "black";
+
+  wsServer.in(room.name).emit("timeout", { loser, winner });
+  wsServer.in(room.name).emit("game_end", winner);
+
+  room.blackPlayer = "";
+  room.whitePlayer = "";
+  room.takes = [];
+
+  emitPlayerChange(room);
+}
 
 wsServer.on("connection", (socket) => {
   socket.onAny((event) => {
@@ -143,7 +192,7 @@ wsServer.on("connection", (socket) => {
   });
 
   socket.on("room_list", () => {
-    socket.emit("room_list", publicRoom);
+    socket.emit("room_list", getSafeRoomList());
   });
 
   socket.on("room_new", (name) => {
@@ -168,12 +217,16 @@ wsServer.on("connection", (socket) => {
       blackPlayer: "",
       whitePlayer: "",
       takes: [],
+      turnTime:30,
+      timer:null,
+      interval:null,
+      remaining:30
     };
 
     roomInfo.name = name;
 
     publicRoom.push(roomInfo);
-    wsServer.sockets.emit("room_list", publicRoom);
+    wsServer.sockets.emit("room_list", getSafeRoomList());
 
     enterRoom(socket, name);
   });
@@ -202,6 +255,15 @@ wsServer.on("connection", (socket) => {
       socket.emit("error", "방에 입장하지 않았습니다.");
       return;
     }
+    const isSpectator=
+      room.blackPlayer!==socket.id&&
+      room.whitePlayer!==socket.id;
+
+    if(isSpectator){
+      socket.emit("error", "관전자는 채팅에 참여할 수 없습니다.");
+      return;
+    }
+
     wsServer.in(roomName).emit("chat_message", {
       sender:socket.id,
       text:text,
@@ -238,6 +300,9 @@ wsServer.on("connection", (socket) => {
         return;
       }
     }
+    if (room.blackPlayer!==""&&room.whitePlayer!==""){
+      startTurnTimer(room);
+    }
 
     emitPlayerChange(room);
   });
@@ -254,13 +319,11 @@ wsServer.on("connection", (socket) => {
     const isBlackTurn = room.takes.length % 2 == 0;
 
     if (isBlackTurn) {
-      //흑돌
       if (room.blackPlayer !== socket.id) {
         socket.emit("error", "흑돌 플레이어가 아닙니다.");
         return;
       }
     } else {
-      //백돌
       if (room.whitePlayer !== socket.id) {
         socket.emit("error", "백돌 플레이어가 아닙니다.");
         return;
@@ -294,6 +357,8 @@ wsServer.on("connection", (socket) => {
       room.whitePlayer = "";
       emitPlayerChange(room);
       return;
+    }else{
+      startTurnTimer(room);
     }
 
     if (isBlackTurn) {
