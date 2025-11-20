@@ -1,3 +1,11 @@
+## Overview
+
+
+
+## Advanced Features
+
+
+
 ## NodeJS Installation
 
 ``` bash
@@ -38,12 +46,11 @@ npm run dev
 | CHANGE_ROLE : { 'type': 'player_change', 'role': 'black' | 'white'} |  
 | CHAT_SEND : { 'type': 'chat_message', 'text': '<string>'}  |  
 | SYSTEM_MESSAGE: { 'type': 'message', 'text': '<string>'}  |  
-| PLACE_STONE : { 'type': 'player_selected', 'x': <0~14>, 'y': <0~14> }  |  
+| PLACE_STONE : { 'type': 'player_selected', 'x': <0 ~ 14>, 'y': <0 ~ 14> }  |  
 | GAME_END: { 'type': 'game_end', 'winner': 'black' | 'white' } |  
 | TIMER_INIT: { 'type': 'timer_init', 'remaining': <number> }  |  
 | TIMER_TICK: { 'type': 'timer_tick', 'remaining': <number> }  |  
 | TIMEOUT: { 'type': 'timeout', 'loser': 'black' | 'white', 'winner': 'black' | 'white' }  |  
-
 
 
 
