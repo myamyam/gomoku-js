@@ -4,6 +4,18 @@
 
 ## Advanced Features
 
+- Spectator-only chat mode
+
+Spectators can only view player's chatting.
+
+If they try to enter the chatting, the system give the messages that "관전자는 채팅에 참여할 수 없습니다."
+
+
+- Time limit
+
+Each player must place the stone within 30 seconds.
+
+If one player don't place the stone in 30 secs, the system will be treated as a defeat.
 
 
 ## NodeJS Installation
@@ -17,7 +29,7 @@ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 # Node.js 다운로드 및 설치:
 nvm install 24
 
-## Node.js / npm 버전 확인:
+# Node.js / npm 버전 확인:
 node -v
 nvm current 
 npm -v
