@@ -150,6 +150,7 @@ function checkOmokCompleted(coord, takes) {
 }
 function startTurnTimer(room) {
   if (room.timer) clearTimeout(room.timer);
+  if (room.interval) clearInterval(room.interval);
 
   room.remaining = room.turnTime;
 
@@ -162,6 +163,9 @@ function startTurnTimer(room) {
     wsServer.in(room.name).emit("timer_tick", {
       remaining: room.remaining
     });
+    if (room.remaining <= 0 ) {
+      clearInterval(room.interval);
+    }
   }, 1000);
 
   room.timer = setTimeout(() => {
@@ -351,8 +355,13 @@ wsServer.on("connection", (socket) => {
 
     if (checkOmokCompleted(coord, room.takes)) {
       console.log("Omok completed!");
+      if (room.timer) clearTimeout(room.timer);
+      if (room.interval) clearInterval(room.interval);
+      room.remaining=room.turnTime;
+
       wsServer.in(name).emit("game_end", isBlackTurn ? "black" : "white");
       wsServer.in(name).emit("message", `${socket.id}님이 승리하셨습니다!`);
+      
       room.blackPlayer = "";
       room.whitePlayer = "";
       emitPlayerChange(room);
