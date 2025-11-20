@@ -1,6 +1,6 @@
-## Installation
+## NodeJS Installation
 
-'''bash
+``` bash
 # nvm 다운로드 및 설치
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 
@@ -13,12 +13,17 @@ nvm install 24
 node -v
 nvm current 
 npm -v
-'''
+```
 
-## dependencies 설치
+## Dependencies Installation
+
+``` bash
 npm install --save-dev @babel/core @babel/cli @babel/node @babel/preset-env @babel/preset-react nodemon
 
 npm install --save express react react-dom socket.io
+```
 
-## 실행
+## Run server
+``` bash
 npm run dev
+```
