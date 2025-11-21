@@ -6,7 +6,7 @@
 
 방목록에서 해당 방을 확인할 수 있음
 
-인원 수, 대기중/게임 진행중 정보를 제공
+인원 수, 대기중/게임 진행중 정보 제공
 
 플레이어 입장, 관전입장을 선택해서 게임룸 입장
 
@@ -98,7 +98,7 @@ npm run dev
 | GAME_END: { 'type': 'game_end', 'winner': 'black' | 'white' } |  
 | TIMER_INIT: { 'type': 'timer_init', 'remaining': <number> }  |  
 | TIMER_TICK: { 'type': 'timer_tick', 'remaining': <number> }  |  
-| TIMEOUT: { 'type': 'timeout', 'loser': 'black' | 'white', 'winner': 'black' | 'white' }  |  
+| TIMEOUT: { 'type': 'timeout', 'loser': '' , 'winner': '' }  | 
 
 
 
