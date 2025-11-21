@@ -148,6 +148,7 @@ function checkOmokCompleted(coord, takes) {
     }
   });
 }
+
 function startTurnTimer(room) {
   if (room.timer) clearTimeout(room.timer);
   if (room.interval) clearInterval(room.interval);
@@ -278,6 +279,11 @@ wsServer.on("connection", (socket) => {
   socket.on("player_change", (color) => {
     const roomName = getJoinedRoomName(socket);
     const room = getPublicRoom(roomName);
+    
+    if(!room) {
+      socket.emit("error", "방에 입장하지 않았습니다.");
+      return;
+    }
 
     if (color === "black") {
       if (room.blackPlayer !== "") {

@@ -23,7 +23,7 @@ socket.on("error", (message) => {
 });
 
 const Header = () => {
-  return <h1 className="title">Socket Omok</h1>;
+  return <h1 className="title">Gomoku Lobby</h1>;
 };
 
 const NewRoom = () => {

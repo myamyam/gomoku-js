@@ -1,6 +1,39 @@
 ## Overview
 
+* Game Lobby 
 
+방 이름을 적고 방 만들기
+
+방목록에서 해당 방을 확인할 수 있음
+
+인원 수, 대기중/게임 진행중 정보를 제공
+
+플레이어 입장, 관전입장을 선택해서 게임룸 입장
+
+인원수 2/2 이면, 플레이어 입장 버튼은 사라지고 관전 입장만 가능함.
+
+Game Logic
+
+방에 입장해서 흑돌/백돌 참가 선택
+
+오목돌을 둘 수 있는 위치 표시
+
+가장 최근에 놓은 돌에 붉은 점 표시
+
+승리 조건
+- 같은 색 돌 다섯 개를 연속으로 둔다
+- 상대 타임오버
+
+Chat
+
+시스템 메세지
+입장, 승리, 퇴장 메세지를 시스템이 제시
+
+플레이어 메세지
+자유롭게 채팅
+
+관전자 모드
+채팅 제한되고, 플레이어 채팅도 관전만 가능
 
 ## Advanced Features
 
@@ -8,7 +41,7 @@
 
 Spectators can only view player's chatting.
 
-If they try to enter the chatting, the system give the messages that "관전자는 채팅에 참여할 수 없습니다."
+If they try to enter the chatting, the system give the messages that "관전자는 채팅에 참여할 수 없습니다.".
 
 
 - Time limit
