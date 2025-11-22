@@ -17,7 +17,8 @@ app.get("/", (req, res) => {
 const httpServer = http.createServer(app);
 const wsServer = new Server(httpServer);
 
-///////////////////////////////////////////////////////////
+const sessionMap = new Map(); 
+const socketToClientId = new Map(); 
 
 let publicRoom = [];
 
@@ -192,6 +193,25 @@ function handleTimeout(room) {
 }
 
 wsServer.on("connection", (socket) => {
+  socket.on("auth", (clientId) => {
+    socketToClientId.set(socket.id, clientId);
+
+    const saved = sessionMap.get(clientId);
+    if (!saved) return;
+
+    const room = getPublicRoom(saved.roomName);
+    if (!room) return;
+
+    socket.join(saved.roomName);
+
+    if (saved.color === "black") room.blackPlayer = socket.id;
+    if (saved.color === "white") room.whitePlayer = socket.id;
+
+    sessionMap.set(clientId, { roomName: saved.roomName, color: saved.color });
+
+    socket.emit("room_enter", getSafeRoomData(room));
+    emitPlayerChange(room);
+  });
   socket.onAny((event) => {
     console.log(`Socket event: ${event}`);
   });
@@ -279,8 +299,9 @@ wsServer.on("connection", (socket) => {
   socket.on("player_change", (color) => {
     const roomName = getJoinedRoomName(socket);
     const room = getPublicRoom(roomName);
-    
-    if(!room) {
+    const clientId = socketToClientId.get(socket.id);
+  
+    if(!room || !clientId) {
       socket.emit("error", "방에 입장하지 않았습니다.");
       return;
     }
@@ -292,6 +313,7 @@ wsServer.on("connection", (socket) => {
       } else {
         if (room.whitePlayer === socket.id) room.whitePlayer = "";
         room.blackPlayer = socket.id;
+        sessionMap.set(clientId, { roomName, color: "black" });
       }
     } else if (color === "white") {
       if (room.whitePlayer !== "") {
@@ -300,6 +322,7 @@ wsServer.on("connection", (socket) => {
       } else {
         if (room.blackPlayer === socket.id) room.blackPlayer = "";
         room.whitePlayer = socket.id;
+        sessionMap.set(clientId, { roomName, color: "white" });
       }
     } else if (color === "spectator") {
       if (room.blackPlayer === socket.id) {
@@ -309,6 +332,7 @@ wsServer.on("connection", (socket) => {
       } else {
         return;
       }
+      sessionMap.delete(clientId);
     }
     if (room.blackPlayer!==""&&room.whitePlayer!==""){
       startTurnTimer(room);
@@ -386,8 +410,28 @@ wsServer.on("connection", (socket) => {
   socket.on("player_ready", () => {});
 
   socket.on("disconnecting", () => {
+      const clientId = socketToClientId.get(socket.id);
+      if (!clientId) return;
+
+      const roomName = getJoinedRoomName(socket);
+      const room = getPublicRoom(roomName);
+      if (!room) return;
+
+      let color = null;
+      if (room.blackPlayer === socket.id) color = "black";
+      if (room.whitePlayer === socket.id) color = "white";
+
+      if (color) {
+        sessionMap.set(clientId, { roomName, color });
+
+        // 자리 비워두기
+        if (color === "black") room.blackPlayer = "";
+        if (color === "white") room.whitePlayer = "";
+
+        emitPlayerChange(room);
+      }
     console.log(`Socket ${socket.id} is disconnecting.`);
-    leaveRoom(socket);
+    //leaveRoom(socket);
   });
 });
 

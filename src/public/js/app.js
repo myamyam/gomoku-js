@@ -1,5 +1,16 @@
 const socket = io();
 
+let clientId = sessionStorage.getItem("clientId");
+
+socket.on("connect", () => {
+  if (!clientId) {
+    clientId = crypto.randomUUID();
+    sessionStorage.setItem("clientId", clientId);
+  }
+
+  socket.emit("auth", clientId);
+});
+
 function Mobile() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
