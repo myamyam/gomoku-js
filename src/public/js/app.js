@@ -1,12 +1,5 @@
 const socket = io();
 
-let userId=localStorage.getItem("userId");
-if (!userId) {
-  userId=crypto.randomUUID();
-  localStorage.setItem("userId", userId);
-}
-socket.emit("auth", userId);
-
 function Mobile() {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent
@@ -23,7 +16,7 @@ socket.on("error", (message) => {
 });
 
 const Header = () => {
-  return <h1 className="title">Gomoku Lobby</h1>;
+  return <h1 className="title">Let's Gomoku</h1>;
 };
 
 const NewRoom = () => {
@@ -117,9 +110,9 @@ const WaitingRoom = ({setEnterMode}) => {
   );
 };
 
-////////////////////////////////////////////////////////////////////////
-const BOARD_OFFSET = 5.24; //%
-const BOARD_SPACE = 6.41; //%
+
+const BOARD_OFFSET = 5.24;
+const BOARD_SPACE = 6.41;
 
 const stone = ({ type, x, y }) => {
   let material = "";
